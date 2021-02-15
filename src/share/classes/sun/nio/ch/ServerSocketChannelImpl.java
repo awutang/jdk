@@ -82,7 +82,11 @@ class ServerSocketChannelImpl
 
     // -- End of fields protected by stateLock
 
-
+    /**
+     * 构建linux系统下ServerSocket的文件描述符
+     * @param sp
+     * @throws IOException
+     */
     ServerSocketChannelImpl(SelectorProvider sp) throws IOException {
         super(sp);
         this.fd =  Net.serverSocket(true);

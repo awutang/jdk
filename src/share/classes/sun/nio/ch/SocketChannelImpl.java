@@ -690,6 +690,14 @@ class SocketChannelImpl
         }
     }
 
+    /**
+     * 对三次握手中的第二次（客户端接收服务端应答结果）进行判断，结果有三种可能：
+     *  1.连接成功返回true
+     *  2.连接失败返回false
+     *  3.发生channel被关闭、中断等异常，抛出异常
+     * @return
+     * @throws IOException
+     */
     public boolean finishConnect() throws IOException {
         synchronized (readLock) {
             synchronized (writeLock) {

@@ -83,12 +83,20 @@ public abstract class SelectorImpl
                 throw new ClosedSelectorException();
             synchronized (publicKeys) {
                 synchronized (publicSelectedKeys) {
+                    // myConfusionsv:epoll? or kqueue?--linux用epoll,mac用kqueue
                     return doSelect(timeout);
                 }
             }
         }
     }
 
+    /**
+     * 该方法和select()类似，该方法也会导致阻塞直到至少一个channel被选择(即，该channel注册的事件发生了)为止，
+     * 除非下面3种情况任意一种发生：a) 设置的超时时间到达；b) 当前线程发生中断；c) selector的wakeup方法被调用
+     * @param timeout
+     * @return
+     * @throws IOException
+     */
     public int select(long timeout)
         throws IOException
     {
@@ -97,10 +105,21 @@ public abstract class SelectorImpl
         return lockAndDoSelect((timeout == 0) ? -1 : timeout);
     }
 
+    /**
+     * 该方法会一直阻塞直到至少一个channel被选择(即，该channel注册的事件发生了)为止，
+     * 除非当前线程发生中断或者selector的wakeup方法被调用
+     * @return
+     * @throws IOException
+     */
     public int select() throws IOException {
         return select(0);
     }
 
+    /**
+     * 该方法不会发生阻塞，如果没有一个channel被选择也会立即返回。主要是超时时间为0所以可以不用等待就返回
+     * @return
+     * @throws IOException
+     */
     public int selectNow() throws IOException {
         return lockAndDoSelect(0);
     }
@@ -120,23 +139,40 @@ public abstract class SelectorImpl
 
     public void putEventOps(SelectionKeyImpl sk, int ops) { }
 
+    /**
+     * 将channel注册到selector时，创建selectionKey时设置channel与selector，并且还要设置感兴趣的操作事件
+     * @param ch
+     * @param ops 如果是0(不在几个操作位范围中，则表示仅仅只做注册动作)
+     * @param attachment
+     * @return
+     */
     protected final SelectionKey register(AbstractSelectableChannel ch,
                                           int ops,
                                           Object attachment)
     {
         if (!(ch instanceof SelChImpl))
             throw new IllegalSelectorException();
+        // 1. 构建代表channel和selector间关系的SelectionKey对象
         SelectionKeyImpl k = new SelectionKeyImpl((SelChImpl)ch, this);
         k.attach(attachment);
         synchronized (publicKeys) {
+            // 2. 将channel注册到epoll中
             implRegister(k);
         }
+        // 3.a) 会将注册的感兴趣的事件和其对应的文件描述存储到EPollArrayWrapper对象的eventsLow或eventsHigh中，这是给底层实现epoll_wait时使用的。
+        // b) 同时该操作还会将设置SelectionKey的interestOps字段，这是给我们程序员获取使用的
         k.interestOps(ops);
         return k;
     }
 
     protected abstract void implRegister(SelectionKeyImpl ski);
 
+    /**
+     * 从cancelledKeys集合中依次取出注销的SelectionKey，执行注销操作，
+     * 将处理后的SelectionKey从cancelledKeys集合中移除。
+     * 执行processDeregisterQueue()后cancelledKeys集合会为空
+     * @throws IOException
+     */
     void processDeregisterQueue() throws IOException {
         // Precondition: Synchronized on this, keys, and selectedKeys
         Set<SelectionKey> cks = cancelledKeys();
@@ -146,6 +182,7 @@ public abstract class SelectorImpl
                 while (i.hasNext()) {
                     SelectionKeyImpl ski = (SelectionKeyImpl)i.next();
                     try {
+                        // 注销操作
                         implDereg(ski);
                     } catch (SocketException se) {
                         throw new IOException("Error deregistering key", se);

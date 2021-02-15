@@ -207,6 +207,13 @@ class KQueueArrayWrapper {
     private static native void initStructSizes();
 
     private native void register0(int kq, int fd, int read, int write);
+
+    //用于注册、等待阻塞 如下几个参数是kevent0 JNI的C++实现
+    //changelist : 监听列表
+    //nchanges : 监听数目
+    //eventlist : 就绪列表
+    //nevents : 就绪事件数目
+    //timeout : 0 非阻塞，-1 阻塞，>0 等待超时
     private native int kevent0(int kq, long keventAddress, int keventCount,
                                long timeout);
     private static native void interrupt(int fd);

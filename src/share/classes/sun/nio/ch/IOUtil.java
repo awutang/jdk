@@ -55,6 +55,7 @@ public class IOUtil {
         int lim = src.limit();
         assert (pos <= lim);
         int rem = (pos <= lim ? lim - pos : 0);
+        // 创建了一块堆外内存，并将数据复制到堆外内存，然后将堆外内存中的数据写出。所以对于NIO，对于堆内内存也会有一次cpu copy
         ByteBuffer bb = Util.getTemporaryDirectBuffer(rem);
         try {
             bb.put(src);

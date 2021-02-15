@@ -1,0 +1,37 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+src/main/java/com/utils/GenerateRestore*
+src/main/java/com/utils/IdCardUtil.java
+src/main/java/com/utils/KeplerFileUtils.java
+
+### Application ###
+.mvn
+*/clent.xml
+.DS_Store
+
+
+client.logRoot_IS_UNDEFINED/
+logs/
+*.log

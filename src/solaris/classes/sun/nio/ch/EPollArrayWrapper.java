@@ -54,6 +54,10 @@ import sun.security.action.GetIntegerAction;
  * this implementation we set data.fd to be the file descriptor that we
  * register. That way, we have the file descriptor available when we
  * process the events.
+ *
+ * EPollArrayWrapper完成了对epoll文件描述符的构建，以及对linux系统的epoll指令操纵的封装。
+ * 维护每次selection操作的结果，即epollwait结果的epollevent数组。
+ * EPollArrayWrapper操纵了一个linux系统下epoll_event结构的本地数组。
  */
 
 class EPollArrayWrapper {
@@ -113,6 +117,7 @@ class EPollArrayWrapper {
     // file descriptors with registration changes pending
     private int[] updateDescriptors = new int[INITIAL_PENDING_UPDATE_SIZE];
 
+    // 用于存储已经注册的文件描述符和其注册等待改变的事件的关联关系。在epoll_wait操作就是要检测这里文件描述法注册的事件是否有发生。
     // events for file descriptors with registration changes pending, indexed
     // by file descriptor and stored as bytes for efficiency reasons. For
     // file descriptors higher than MAX_UPDATE_ARRAY_SIZE (unlimited case at
@@ -125,6 +130,10 @@ class EPollArrayWrapper {
     private final BitSet registered = new BitSet();
 
 
+    /**
+     * EPoolArrayWrapper构造函数，创建了epoll文件描述符。构建了一个用于存放epollwait返回结果的epollevent数组
+     * @throws IOException
+     */
     EPollArrayWrapper() throws IOException {
         // creates the epoll file descriptor
         epfd = epollCreate();
@@ -264,8 +273,16 @@ class EPollArrayWrapper {
         pollArray.free();
     }
 
+    /**
+     * epoll操作
+     * @param timeout
+     * @return
+     * @throws IOException
+     */
     int poll(long timeout) throws IOException {
+        // 1. 将已经注册到该selector的事件(eventsLow或eventsHigh)通过调用epollCtl(epfd, opcode, fd, events); 注册到linux系统中
         updateRegistrations();
+        // 2. 调用linux底层的epollwait方法，并返回在epollwait期间有事件触发的entry的个数
         updated = epollWait(pollArrayAddress, NUM_EPOLLEVENTS, timeout, epfd);
         for (int i=0; i<updated; i++) {
             if (getDescriptor(i) == incomingInterruptFD) {
@@ -296,6 +313,7 @@ class EPollArrayWrapper {
                         opcode = (events != 0) ? EPOLL_CTL_ADD : 0;
                     }
                     if (opcode != 0) {
+                        // 操作epollcreate创建的epoll，如将socket句柄加入到epoll中让其监控，或把epoll正在监控的某个socket句柄移出epoll
                         epollCtl(epfd, opcode, fd, events);
                         if (opcode == EPOLL_CTL_ADD) {
                             registered.set(fd);
@@ -334,8 +352,17 @@ class EPollArrayWrapper {
         init();
     }
 
+    /**EpollArrayWapper将Linux的epoll相关系统调用封装成了native方法供EpollSelectorImpl使用
+     * Linux系统中epoll:JDK NIO使用的是 LT ，而Netty使用的是 ET*/
+
+    // epoll_create建立一个epoll对象。参数size是内核保证能够正确处理的最大句柄数，多于这个最大数时内核可不保证效果。
     private native int epollCreate();
+
+    // 操作epollcreate创建的epoll，如将socket句柄加入到epoll中让其监控，或把epoll正在监控的某个socket句柄移出epoll
     private native void epollCtl(int epfd, int opcode, int fd, int events);
+
+    // epoll_wait在调用时，在给定的timeout时间内，所监控的句柄中有事件发生时，就返回用户态的进程。
+    // timeout : 0 非阻塞，-1 阻塞(没有超时时间)，>0 等待超时
     private native int epollWait(long pollAddress, int numfds, long timeout,
                                  int epfd) throws IOException;
     private static native int sizeofEPollEvent();

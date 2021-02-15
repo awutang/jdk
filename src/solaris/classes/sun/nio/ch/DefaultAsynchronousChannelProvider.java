@@ -67,6 +67,7 @@ public class DefaultAsynchronousChannelProvider {
         if (osname.equals("Linux"))
             return createProvider("sun.nio.ch.LinuxAsynchronousChannelProvider");
         if (osname.contains("OS X"))
+            // 不同操作系统生成的provider也不同
             return createProvider("sun.nio.ch.BsdAsynchronousChannelProvider");
         if (osname.equals("AIX"))
             return createProvider("sun.nio.ch.AixAsynchronousChannelProvider");

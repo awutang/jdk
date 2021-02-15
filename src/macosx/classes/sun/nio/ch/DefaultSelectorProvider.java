@@ -40,6 +40,10 @@ public class DefaultSelectorProvider {
 
     /**
      * Returns the default SelectorProvider.
+     * myConfusionsv：默认用kqueue而不是epoll?
+     * if (osname.equals("Linux"))
+     *             return createProvider("sun.nio.ch.EPollSelectorProvider");
+     * Linux用EPollSelectorProvider，mac用KQueueSelectorProvider
      */
     public static SelectorProvider create() {
         return new sun.nio.ch.KQueueSelectorProvider();

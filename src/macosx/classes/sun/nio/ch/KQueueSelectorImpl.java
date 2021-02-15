@@ -100,11 +100,13 @@ class KQueueSelectorImpl
         processDeregisterQueue();
         try {
             begin();
+            // myConfusion:查找是否有准备好的channel kqueue与epoll的区别？
             entries = kqueueWrapper.poll(timeout);
         } finally {
             end();
         }
         processDeregisterQueue();
+        // 更新到selector中去
         return updateSelectedKeys(entries);
     }
 
@@ -216,13 +218,20 @@ class KQueueSelectorImpl
     }
 
 
+    /**
+     * 删除了selector中的某一selectionKey
+     * @param ski
+     * @throws IOException
+     */
     protected void implDereg(SelectionKeyImpl ski) throws IOException {
         int fd = ski.channel.getFDVal();
         fdMap.remove(Integer.valueOf(fd));
         kqueueWrapper.release(ski.channel);
         totalChannels--;
+        // 从selector的selectionKeys中删除已经取消的（表明channel与selector的对应关系取消了)）
         keys.remove(ski);
         selectedKeys.remove(ski);
+        // 删除了channel.keys中的SelectionKey对象
         deregister((AbstractSelectionKey)ski);
         SelectableChannel selch = ski.channel();
         if (!selch.isOpen() && !selch.isRegistered())
@@ -240,6 +249,7 @@ class KQueueSelectorImpl
     public Selector wakeup() {
         synchronized (interruptLock) {
             if (!interruptTriggered) {
+                // entries = kqueueWrapper.poll(timeout);
                 kqueueWrapper.interrupt();
                 interruptTriggered = true;
             }

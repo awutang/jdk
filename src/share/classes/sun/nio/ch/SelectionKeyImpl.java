@@ -44,6 +44,15 @@ public class SelectionKeyImpl
     // Index for a pollfd array in Selector that this key is registered with
     private int index;
 
+    // readyOps与interestOps有啥关系？--监控即将发生、已经发生（比如读操作，channel中接收到数据后，就更新readyOps让后续线程从channel中读数据？
+    // --是的，interestOps是epoll中需要对某一selectionKey和事件进行监听的描述，
+    // 当epoll中监听到某一fd(channel->fd)准备好后，更新readyOps(应用可以得到是什么操作准备好了从而进行相应操作)）。
+    // 这就使得应用层与linux系统调用联系起来了！！！
+    //  -- interestOps表示需要监听的网络操作事件 myConfusionsv:在哪里监听的？Future?--epoll
+    /**SelectionKey中维护着两个很重要的属性：interestOps、readyOps.
+     * interestOps是我们希望Selector监听Channel的哪些事件。我们将我们感兴趣的事件设置到该字段，
+     * 这样在selection操作时，当发现该Channel有我们所感兴趣的事件发生时，就会将我们感兴趣的事件再设置到readyOps中，
+     * 这样我们就能得知是哪些事件发生了以做相应处理。*/
     private volatile int interestOps;
     private int readyOps;
 
@@ -99,6 +108,12 @@ public class SelectionKeyImpl
         return readyOps;
     }
 
+    /**
+     * a) 会将注册的感兴趣的事件和其对应的文件描述存储到EPollArrayWrapper对象的eventsLow或eventsHigh中，这是给底层实现epoll_wait时使用的。
+     * b) 同时该操作还会将设置SelectionKey的interestOps字段，这是给我们程序员获取使用的
+     * @param ops
+     * @return
+     */
     public SelectionKey nioInterestOps(int ops) {
         if ((ops & ~channel().validOps()) != 0)
             throw new IllegalArgumentException();

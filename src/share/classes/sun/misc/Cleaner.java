@@ -63,14 +63,26 @@ public class Cleaner
     // Dummy reference queue, needed because the PhantomReference constructor
     // insists that we pass a queue.  Nothing will ever be placed on this queue
     // since the reference handler invokes cleaners explicitly.
+
+//    虚队列，命名很到位。之前说GC把Reference加入pending-Reference链中后，ReferenceHandler线程在处理时
+//     * 是不会将对应的Reference加入列队的，而是调用Cleaner.clean方法。但如果Reference不注册ReferenceQueue，GC处理时
+//     * 又无法把他加入到pending-Reference链中，所以Cleaner里面有了一个dummyQueue成员变量。
     //
     private static final ReferenceQueue<Object> dummyQueue = new ReferenceQueue<>();
 
     // Doubly-linked list of live cleaners, which prevents the cleaners
     // themselves from being GC'd before their referents
-    //
+    // 双向链表，保存cleaner的，referents先回收再cleaner被回收，保证在referent被回收之前
+    // 这些Cleaner都是存活的。
+    // 为啥要需要first去维持这个回收顺序呢?
+    //  1.维持回收顺序是必要的，因为clean()本来就是在referent引用的对象没有强引用了，gc时发现需要回收时才触发的.所以是referent引用对象先回收（因为现行技术需要）。
+    //  2.通过first可以维持这个顺序，因为如果没有first,DirectByteBuffer.cleaner被用户误操作比如通过反射设置为null,那cleaner对象就没有强引用了，
+    //  会在gc时就回收了，那堆外内存就不能被回收了；如果有first用户可以精准控制cleaner对象回收的时机（现在是放在需要回收堆外内存之前）
+    //  3.clean()中回收堆外内存有用到DirectByteBuffer对象的数据么？--用的是创建Deallocator对象时传入的参数，与DirectByteBuffer对象无关了，
+    //  所以DirectByteBuffer对象可以先回收
     static private Cleaner first = null;
 
+    // 这里的next与Reference.next不一样，此处的next是cleaner双向链表指针，由java应用维护；而Reference.next是由jvm维护的
     private Cleaner
         next = null,
         prev = null;
@@ -84,6 +96,11 @@ public class Cleaner
         return cl;
     }
 
+    /**
+     * 将cleaner从双向链表中删除
+     * @param cl
+     * @return
+     */
     private static synchronized boolean remove(Cleaner cl) {
 
         // If already removed, do nothing
@@ -111,6 +128,11 @@ public class Cleaner
 
     private final Runnable thunk;
 
+    /**
+     * 构造方法私有，保证所有cleaner对象都需要通过create()创建
+     * @param referent
+     * @param thunk
+     */
     private Cleaner(Object referent, Runnable thunk) {
         super(referent, dummyQueue);
         this.thunk = thunk;
@@ -135,11 +157,16 @@ public class Cleaner
 
     /**
      * Runs this cleaner, if it has not been run before.
+     *
+     * clean()中会去释放直接内存，那么何时触发的clean()呢？
+     * --从Reference.tryHandlePending(),前提是referent指向的DirectByteBuffer对象无任何强引用且jvm执行gc
      */
     public void clean() {
+        // 从双向链表中删除本cleaner对象,这样 Cleaner 对象就可以被gc回收掉了
         if (!remove(this))
             return;
         try {
+            // 回收堆外内存
             thunk.run();
         } catch (final Throwable x) {
             AccessController.doPrivileged(new PrivilegedAction<Void>() {
