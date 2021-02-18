@@ -251,6 +251,7 @@ class ServerSocketChannelImpl
                     return null;
                 thread = NativeThread.current();
                 for (;;) {
+                    // NioServerSocketChannel.ch在构造方法中被设置为非阻塞的，因此可以立马返回
                     n = accept(this.fd, newfd, isaa);
                     if ((n == IOStatus.INTERRUPTED) && isOpen())
                         continue;
@@ -262,6 +263,9 @@ class ServerSocketChannelImpl
                 assert IOStatus.check(n);
             }
 
+            // Returns 1 on success, or IOStatus.UNAVAILABLE (if non-blocking and no
+            //    // connections are pending) or IOStatus.INTERRUPTED
+            // 当非阻塞且还没有客户端发起连接时，返回n为IOStatus.UNAVAILABLE（-2），因此此处返回null
             if (n < 1)
                 return null;
 

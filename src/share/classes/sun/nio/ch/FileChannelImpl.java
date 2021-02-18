@@ -580,6 +580,14 @@ public class FileChannelImpl
         }
     }
 
+    /**
+     * DMA引擎直接把数据从内核缓冲区传输到协议引擎（protocol engine,直接将文件缓冲区的数据发送到目标 Channel）--真正的零拷贝 2.4版本的sendFile()或2.6.17de splice
+     * @param position
+     * @param count
+     * @param target
+     * @return
+     * @throws IOException
+     */
     public long transferTo(long position, long count,
                            WritableByteChannel target)
         throws IOException

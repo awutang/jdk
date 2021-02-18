@@ -51,8 +51,8 @@ public class SelectionKeyImpl
     //  -- interestOps表示需要监听的网络操作事件 myConfusionsv:在哪里监听的？Future?--epoll
     /**SelectionKey中维护着两个很重要的属性：interestOps、readyOps.
      * interestOps是我们希望Selector监听Channel的哪些事件。我们将我们感兴趣的事件设置到该字段，
-     * 这样在selection操作时，当发现该Channel有我们所感兴趣的事件发生时，就会将我们感兴趣的事件再设置到readyOps中，
-     * 这样我们就能得知是哪些事件发生了以做相应处理。*/
+     * 这样在epoll_wait操作时，当发现该Channel有我们所感兴趣的事件发生时，就会将我们感兴趣的事件再设置到readyOps中，
+     * 这样我们就能得知是哪些事件发生了，NioEventLoop中以做相应处理。*/
     private volatile int interestOps;
     private int readyOps;
 

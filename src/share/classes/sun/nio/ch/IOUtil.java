@@ -43,21 +43,35 @@ public class IOUtil {
 
     private IOUtil() { }                // No instantiation
 
+    /**
+     * 写
+     * @param fd
+     * @param src
+     * @param position
+     * @param nd
+     * @return
+     * @throws IOException
+     */
     static int write(FileDescriptor fd, ByteBuffer src, long position,
                      NativeDispatcher nd)
         throws IOException
     {
+        // 1. 若是直接内存则直接写 --这就是netty的zero copy
+        // myConfusion:这里的directBuffer是否就是零拷贝讲解中的kernel态的socket缓冲区？那socket缓冲区到网卡的数据复制采用DMA就可以了(不需要cpu copy)，这就实现了真正的zero copy
         if (src instanceof DirectBuffer)
             return writeFromNativeBuffer(fd, src, position, nd);
 
+        // 2. 与读一样，同样需要经过直接内存中转
         // Substitute a native buffer
         int pos = src.position();
         int lim = src.limit();
         assert (pos <= lim);
         int rem = (pos <= lim ? lim - pos : 0);
+        // 当我们需要将数据通过socket发送的时候，就需要从堆内存拷贝到直接内存，然后再由直接内存拷贝到网卡接口层。
         // 创建了一块堆外内存，并将数据复制到堆外内存，然后将堆外内存中的数据写出。所以对于NIO，对于堆内内存也会有一次cpu copy
         ByteBuffer bb = Util.getTemporaryDirectBuffer(rem);
         try {
+            // heap数据复制到堆外内存
             bb.put(src);
             bb.flip();
             // Do not update src until we see how many bytes were written
@@ -74,6 +88,15 @@ public class IOUtil {
         }
     }
 
+    /**
+     * 写 从bb中写数据到channel
+     * @param fd
+     * @param bb
+     * @param position
+     * @param nd
+     * @return
+     * @throws IOException
+     */
     private static int writeFromNativeBuffer(FileDescriptor fd, ByteBuffer bb,
                                              long position, NativeDispatcher nd)
         throws IOException
@@ -86,6 +109,8 @@ public class IOUtil {
         int written = 0;
         if (rem == 0)
             return 0;
+
+        // 写
         if (position != -1) {
             written = nd.pwrite(fd,
                                 ((DirectBuffer)bb).address() + pos,
@@ -183,21 +208,37 @@ public class IOUtil {
         }
     }
 
+    /**
+     * 从channel读数据到dst netty->jdknio底层实现
+     * @param fd
+     * @param dst
+     * @param position
+     * @param nd
+     * @return
+     * @throws IOException
+     */
     static int read(FileDescriptor fd, ByteBuffer dst, long position,
                     NativeDispatcher nd)
         throws IOException
     {
+        // 1. 判断是否可写
         if (dst.isReadOnly())
             throw new IllegalArgumentException("Read-only buffer");
+
+        // 2.如果netty用的缓冲区是直接内存，则直接将数据读进去
+        // 重要！！！这就是netty零拷贝的地方
         if (dst instanceof DirectBuffer)
             return readIntoNativeBuffer(fd, dst, position, nd);
 
+        // 3.如果netty用的缓冲区不是直接内存，则需要新建一个直接内存进行中转
+        // 新建的直接内存长度是固定的，因此channel中的数据可能一次读不完
         // Substitute a native buffer
         ByteBuffer bb = Util.getTemporaryDirectBuffer(dst.remaining());
         try {
             int n = readIntoNativeBuffer(fd, bb, position, nd);
             bb.flip();
             if (n > 0)
+                // 4. 将直接内存bb的数据copy到heap
                 dst.put(bb);
             return n;
         } finally {
@@ -205,6 +246,15 @@ public class IOUtil {
         }
     }
 
+    /**
+     * 将fd对应的数据读到bb，最底层实现
+     * @param fd
+     * @param bb
+     * @param position
+     * @param nd
+     * @return
+     * @throws IOException
+     */
     private static int readIntoNativeBuffer(FileDescriptor fd, ByteBuffer bb,
                                             long position, NativeDispatcher nd)
         throws IOException
@@ -212,11 +262,13 @@ public class IOUtil {
         int pos = bb.position();
         int lim = bb.limit();
         assert (pos <= lim);
+        // 读取rem个
         int rem = (pos <= lim ? lim - pos : 0);
 
         if (rem == 0)
             return 0;
         int n = 0;
+        // 将fd对应的数据读到bb
         if (position != -1) {
             n = nd.pread(fd, ((DirectBuffer)bb).address() + pos,
                          rem, position);

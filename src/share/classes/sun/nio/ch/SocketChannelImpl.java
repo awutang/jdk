@@ -377,6 +377,7 @@ class SocketChannelImpl
                 // except that the shutdown operation plays the role of
                 // nd.preClose().
                 for (;;) {
+                    // 读
                     n = IOUtil.read(fd, buf, -1, nd);
                     if ((n == IOStatus.INTERRUPTED) && isOpen()) {
                         // The system call was interrupted but the channel
@@ -454,6 +455,12 @@ class SocketChannelImpl
         }
     }
 
+    /**
+     * 写数据，从buf中写到channel
+     * @param buf
+     * @return
+     * @throws IOException
+     */
     public int write(ByteBuffer buf) throws IOException {
         if (buf == null)
             throw new NullPointerException();
@@ -468,6 +475,7 @@ class SocketChannelImpl
                     writerThread = NativeThread.current();
                 }
                 for (;;) {
+                    // 写
                     n = IOUtil.write(fd, buf, -1, nd);
                     if ((n == IOStatus.INTERRUPTED) && isOpen())
                         continue;
