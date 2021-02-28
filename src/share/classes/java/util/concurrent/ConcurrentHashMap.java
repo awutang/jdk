@@ -3456,6 +3456,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 throw new NoSuchElementException();
             K k = p.key;
             V v = p.val;
+            // 当前指向
             lastReturned = p;
             advance();
             return new MapEntry<K,V>(k, v, map);

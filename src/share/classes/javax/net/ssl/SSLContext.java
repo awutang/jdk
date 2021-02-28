@@ -25,9 +25,9 @@
 
 package javax.net.ssl;
 
-import java.security.*;
-
 import sun.security.jca.GetInstance;
+
+import java.security.*;
 
 /**
  * Instances of this class represent a secure socket protocol
@@ -61,11 +61,11 @@ public class SSLContext {
      * Creates an SSLContext object.
      *
      * @param contextSpi the delegate
-     * @param provider the provider
-     * @param protocol the protocol
+     * @param provider   the provider
+     * @param protocol   the protocol
      */
     protected SSLContext(SSLContextSpi contextSpi, Provider provider,
-            String protocol) {
+                         String protocol) {
         this.contextSpi = contextSpi;
         this.provider = provider;
         this.protocol = protocol;
@@ -87,7 +87,7 @@ public class SSLContext {
      *
      * @return the default SSL context
      * @throws NoSuchAlgorithmException if the
-     *   {@link SSLContext#getInstance SSLContext.getInstance()} call fails
+     *                                  {@link SSLContext#getInstance SSLContext.getInstance()} call fails
      * @since 1.6
      */
     public static synchronized SSLContext getDefault()
@@ -104,10 +104,10 @@ public class SSLContext {
      * and not require {@linkplain #init initialization}.
      *
      * @param context the SSLContext
-     * @throws  NullPointerException if context is null
-     * @throws  SecurityException if a security manager exists and its
-     *          <code>checkPermission</code> method does not allow
-     *          <code>SSLPermission("setDefaultSSLContext")</code>
+     * @throws NullPointerException if context is null
+     * @throws SecurityException    if a security manager exists and its
+     *                              <code>checkPermission</code> method does not allow
+     *                              <code>SSLPermission("setDefaultSSLContext")</code>
      * @since 1.6
      */
     public static synchronized void setDefault(SSLContext context) {
@@ -135,26 +135,23 @@ public class SSLContext {
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
      * @param protocol the standard name of the requested protocol.
-     *          See the SSLContext section in the <a href=
-     * "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
-     *          Java Cryptography Architecture Standard Algorithm Name
-     *          Documentation</a>
-     *          for information about standard protocol names.
-     *
+     *                 See the SSLContext section in the <a href=
+     *                 "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
+     *                 Java Cryptography Architecture Standard Algorithm Name
+     *                 Documentation</a>
+     *                 for information about standard protocol names.
      * @return the new <code>SSLContext</code> object.
-     *
-     * @exception NoSuchAlgorithmException if no Provider supports a
-     *          SSLContextSpi implementation for the
-     *          specified protocol.
-     * @exception NullPointerException if protocol is null.
-     *
+     * @throws NoSuchAlgorithmException if no Provider supports a
+     *                                  SSLContextSpi implementation for the
+     *                                  specified protocol.
+     * @throws NullPointerException     if protocol is null.
      * @see java.security.Provider
      */
     public static SSLContext getInstance(String protocol)
             throws NoSuchAlgorithmException {
         GetInstance.Instance instance = GetInstance.getInstance
                 ("SSLContext", SSLContextSpi.class, protocol);
-        return new SSLContext((SSLContextSpi)instance.impl, instance.provider,
+        return new SSLContext((SSLContextSpi) instance.impl, instance.provider,
                 protocol);
     }
 
@@ -171,33 +168,27 @@ public class SSLContext {
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
      * @param protocol the standard name of the requested protocol.
-     *          See the SSLContext section in the <a href=
-     * "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
-     *          Java Cryptography Architecture Standard Algorithm Name
-     *          Documentation</a>
-     *          for information about standard protocol names.
-     *
+     *                 See the SSLContext section in the <a href=
+     *                 "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
+     *                 Java Cryptography Architecture Standard Algorithm Name
+     *                 Documentation</a>
+     *                 for information about standard protocol names.
      * @param provider the name of the provider.
-     *
      * @return the new <code>SSLContext</code> object.
-     *
      * @throws NoSuchAlgorithmException if a SSLContextSpi
-     *          implementation for the specified protocol is not
-     *          available from the specified provider.
-     *
-     * @throws NoSuchProviderException if the specified provider is not
-     *          registered in the security provider list.
-     *
+     *                                  implementation for the specified protocol is not
+     *                                  available from the specified provider.
+     * @throws NoSuchProviderException  if the specified provider is not
+     *                                  registered in the security provider list.
      * @throws IllegalArgumentException if the provider name is null or empty.
-     * @throws NullPointerException if protocol is null.
-     *
+     * @throws NullPointerException     if protocol is null.
      * @see java.security.Provider
      */
     public static SSLContext getInstance(String protocol, String provider)
             throws NoSuchAlgorithmException, NoSuchProviderException {
         GetInstance.Instance instance = GetInstance.getInstance
                 ("SSLContext", SSLContextSpi.class, protocol, provider);
-        return new SSLContext((SSLContextSpi)instance.impl, instance.provider,
+        return new SSLContext((SSLContextSpi) instance.impl, instance.provider,
                 protocol);
     }
 
@@ -211,30 +202,25 @@ public class SSLContext {
      * does not have to be registered in the provider list.
      *
      * @param protocol the standard name of the requested protocol.
-     *          See the SSLContext section in the <a href=
-     * "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
-     *          Java Cryptography Architecture Standard Algorithm Name
-     *          Documentation</a>
-     *          for information about standard protocol names.
-     *
+     *                 See the SSLContext section in the <a href=
+     *                 "{@docRoot}/../technotes/guides/security/StandardNames.html#SSLContext">
+     *                 Java Cryptography Architecture Standard Algorithm Name
+     *                 Documentation</a>
+     *                 for information about standard protocol names.
      * @param provider an instance of the provider.
-     *
      * @return the new <code>SSLContext</code> object.
-     *
      * @throws NoSuchAlgorithmException if a SSLContextSpi
-     *          implementation for the specified protocol is not available
-     *          from the specified Provider object.
-     *
+     *                                  implementation for the specified protocol is not available
+     *                                  from the specified Provider object.
      * @throws IllegalArgumentException if the provider is null.
-     * @throws NullPointerException if protocol is null.
-     *
+     * @throws NullPointerException     if protocol is null.
      * @see java.security.Provider
      */
     public static SSLContext getInstance(String protocol, Provider provider)
             throws NoSuchAlgorithmException {
         GetInstance.Instance instance = GetInstance.getInstance
                 ("SSLContext", SSLContextSpi.class, protocol, provider);
-        return new SSLContext((SSLContextSpi)instance.impl, instance.provider,
+        return new SSLContext((SSLContextSpi) instance.impl, instance.provider,
                 protocol);
     }
 
@@ -266,19 +252,19 @@ public class SSLContext {
      * be searched for the highest priority implementation of the
      * appropriate factory. Likewise, the secure random parameter may
      * be null in which case the default implementation will be used.
-     * <P>
+     * <p>
      * Only the first instance of a particular key and/or trust manager
      * implementation type in the array is used.  (For example, only
      * the first javax.net.ssl.X509KeyManager in the array will be used.)
      *
-     * @param km the sources of authentication keys or null
-     * @param tm the sources of peer authentication trust decisions or null
+     * @param km     the sources of authentication keys or null
+     * @param tm     the sources of peer authentication trust decisions or null
      * @param random the source of randomness for this generator or null
      * @throws KeyManagementException if this operation fails
      */
     public final void init(KeyManager[] km, TrustManager[] tm,
-                                SecureRandom random)
-        throws KeyManagementException {
+                           SecureRandom random)
+            throws KeyManagementException {
         contextSpi.engineInit(km, tm, random);
     }
 
@@ -288,7 +274,7 @@ public class SSLContext {
      *
      * @return the <code>SocketFactory</code> object
      * @throws IllegalStateException if the SSLContextImpl requires
-     *          initialization and the <code>init()</code> has not been called
+     *                               initialization and the <code>init()</code> has not been called
      */
     public final SSLSocketFactory getSocketFactory() {
         return contextSpi.engineGetSocketFactory();
@@ -300,7 +286,7 @@ public class SSLContext {
      *
      * @return the <code>ServerSocketFactory</code> object
      * @throws IllegalStateException if the SSLContextImpl requires
-     *          initialization and the <code>init()</code> has not been called
+     *                               initialization and the <code>init()</code> has not been called
      */
     public final SSLServerSocketFactory getServerSocketFactory() {
         return contextSpi.engineGetServerSocketFactory();
@@ -308,30 +294,30 @@ public class SSLContext {
 
     /**
      * Creates a new <code>SSLEngine</code> using this context.
-     * <P>
+     * <p>
      * Applications using this factory method are providing no hints
      * for an internal session reuse strategy. If hints are desired,
      * {@link #createSSLEngine(String, int)} should be used
      * instead.
-     * <P>
+     * <p>
      * Some cipher suites (such as Kerberos) require remote hostname
      * information, in which case this factory method should not be used.
      *
-     * @return  the <code>SSLEngine</code> object
-     * @throws  UnsupportedOperationException if the underlying provider
-     *          does not implement the operation.
-     * @throws  IllegalStateException if the SSLContextImpl requires
-     *          initialization and the <code>init()</code> has not been called
-     * @since   1.5
+     * @return the <code>SSLEngine</code> object
+     * @throws UnsupportedOperationException if the underlying provider
+     *                                       does not implement the operation.
+     * @throws IllegalStateException         if the SSLContextImpl requires
+     *                                       initialization and the <code>init()</code> has not been called
+     * @since 1.5
      */
     public final SSLEngine createSSLEngine() {
         try {
             return contextSpi.engineCreateSSLEngine();
         } catch (AbstractMethodError e) {
             UnsupportedOperationException unsup =
-                new UnsupportedOperationException(
-                    "Provider: " + getProvider() +
-                    " doesn't support this operation");
+                    new UnsupportedOperationException(
+                            "Provider: " + getProvider() +
+                                    " doesn't support this operation");
             unsup.initCause(e);
             throw unsup;
         }
@@ -340,30 +326,30 @@ public class SSLContext {
     /**
      * Creates a new <code>SSLEngine</code> using this context using
      * advisory peer information.
-     * <P>
+     * <p>
      * Applications using this factory method are providing hints
      * for an internal session reuse strategy.
-     * <P>
+     * <p>
      * Some cipher suites (such as Kerberos) require remote hostname
      * information, in which case peerHost needs to be specified.
      *
-     * @param   peerHost the non-authoritative name of the host
-     * @param   peerPort the non-authoritative port
-     * @return  the new <code>SSLEngine</code> object
-     * @throws  UnsupportedOperationException if the underlying provider
-     *          does not implement the operation.
-     * @throws  IllegalStateException if the SSLContextImpl requires
-     *          initialization and the <code>init()</code> has not been called
-     * @since   1.5
+     * @param peerHost the non-authoritative name of the host
+     * @param peerPort the non-authoritative port
+     * @return the new <code>SSLEngine</code> object
+     * @throws UnsupportedOperationException if the underlying provider
+     *                                       does not implement the operation.
+     * @throws IllegalStateException         if the SSLContextImpl requires
+     *                                       initialization and the <code>init()</code> has not been called
+     * @since 1.5
      */
     public final SSLEngine createSSLEngine(String peerHost, int peerPort) {
         try {
             return contextSpi.engineCreateSSLEngine(peerHost, peerPort);
         } catch (AbstractMethodError e) {
             UnsupportedOperationException unsup =
-                new UnsupportedOperationException(
-                    "Provider: " + getProvider() +
-                    " does not support this operation");
+                    new UnsupportedOperationException(
+                            "Provider: " + getProvider() +
+                                    " does not support this operation");
             unsup.initCause(e);
             throw unsup;
         }
@@ -373,7 +359,7 @@ public class SSLContext {
      * Returns the server session context, which represents the set of
      * SSL sessions available for use during the handshake phase of
      * server-side SSL sockets.
-     * <P>
+     * <p>
      * This context may be unavailable in some environments, in which
      * case this method returns null. For example, when the underlying
      * SSL provider does not provide an implementation of SSLSessionContext
@@ -390,7 +376,7 @@ public class SSLContext {
      * Returns the client session context, which represents the set of
      * SSL sessions available for use during the handshake phase of
      * client-side SSL sockets.
-     * <P>
+     * <p>
      * This context may be unavailable in some environments, in which
      * case this method returns null. For example, when the underlying
      * SSL provider does not provide an implementation of SSLSessionContext
@@ -412,7 +398,7 @@ public class SSLContext {
      *
      * @return a copy of the SSLParameters object with the default settings
      * @throws UnsupportedOperationException if the default SSL parameters
-     *   could not be obtained.
+     *                                       could not be obtained.
      * @since 1.6
      */
     public final SSLParameters getDefaultSSLParameters() {
@@ -427,9 +413,9 @@ public class SSLContext {
      * arrays set to non-null values.
      *
      * @return a copy of the SSLParameters object with the supported
-     *   settings
+     * settings
      * @throws UnsupportedOperationException if the supported SSL parameters
-     *   could not be obtained.
+     *                                       could not be obtained.
      * @since 1.6
      */
     public final SSLParameters getSupportedSSLParameters() {

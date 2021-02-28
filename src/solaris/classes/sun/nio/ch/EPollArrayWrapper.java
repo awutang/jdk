@@ -362,7 +362,7 @@ class EPollArrayWrapper {
     private native void epollCtl(int epfd, int opcode, int fd, int events);
 
     // epoll_wait在调用时，在给定的timeout时间内，所监控的句柄中有事件发生时，就返回用户态的进程。
-    // timeout : 0 非阻塞，-1 阻塞(没有超时时间)，>0 等待超时
+    // timeout : 0 非阻塞，-1 阻塞(没有超时时间)，>0 等待指定时间
     private native int epollWait(long pollAddress, int numfds, long timeout,
                                  int epfd) throws IOException;
     private static native int sizeofEPollEvent();

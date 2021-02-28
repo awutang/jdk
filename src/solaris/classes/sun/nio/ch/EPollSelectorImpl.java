@@ -46,6 +46,7 @@ class EPollSelectorImpl
     // The poll object
     EPollArrayWrapper pollWrapper;
 
+    // 一个selector所有在其上注册的jdknio.channel.fd:selectionKey
     // Maps from file descriptors to keys
     private Map<Integer,SelectionKeyImpl> fdToKey;
 
