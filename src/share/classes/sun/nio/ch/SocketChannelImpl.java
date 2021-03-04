@@ -621,6 +621,12 @@ class SocketChannelImpl
         }
     }
 
+    /**
+     * 客户端发起连接
+     * @param sa
+     * @return
+     * @throws IOException
+     */
     public boolean connect(SocketAddress sa) throws IOException {
         int localPort = 0;
 
@@ -653,6 +659,8 @@ class SocketChannelImpl
                                 InetAddress ia = isa.getAddress();
                                 if (ia.isAnyLocalAddress())
                                     ia = InetAddress.getLocalHost();
+
+                                // 连接
                                 n = Net.connect(fd,
                                                 ia,
                                                 isa.getPort());
@@ -688,6 +696,7 @@ class SocketChannelImpl
                         // If nonblocking and no exception then connection
                         // pending; disallow another invocation
                         if (!isBlocking())
+                            // 非阻塞时
                             state = ST_PENDING;
                         else
                             assert false;
